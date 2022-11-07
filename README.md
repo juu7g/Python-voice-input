@@ -17,6 +17,8 @@
 ## 依存関係 Requirement
 
 - Python 3.8.5  
+- SpeechRecognition 3.8.1  
+- PyAudio 0.2.11+ (マイク入力のために必要)  
 
 ## 使い方 Usage
 
@@ -66,7 +68,8 @@
 
 ## インストール方法 Installation
 
-特になし
+- pip install pyaudio  
+- pip install SpeechRecognition
 
 ## プログラムの説明サイト Program description site
 
