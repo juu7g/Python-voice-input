@@ -73,7 +73,7 @@
 
 ## プログラムの説明サイト Program description site
 
-準備中
+[音声入力で文章作成するアプリの作り方【Python】】 - プログラムでおかえしできるかな](https://juu7g.hatenablog.com/entry/Python/speech-recognition/voice-input-GSR)
 
 ## 作者 Authors
 juu7g
