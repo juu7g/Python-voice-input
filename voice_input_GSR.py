@@ -30,6 +30,8 @@ class VoiceRecognizer():
         self.futures = []
         self.mic_init(my_frame.v_adjust.get(), my_frame.v_threshold.get())
 
+        # スレッドプールの作成
+        self.pool = ThreadPoolExecutor(thread_name_prefix="Rec Thread")
 
     def mic_init(self, is_dynamic:bool=False, threshold:int=50):
         """
@@ -55,21 +57,15 @@ class VoiceRecognizer():
 
     def recognize_voice_thread_pool(self, audio, i, event=None):
         """
-        スレッドプールを作成して音声認識メソッドをスケジュール
+        スレッドプールで音声認識メソッドをスケジュール
         作成された Futureオブジェクトをself.futuresに追加する
         Args:
             audio:  音声データ
             int:    処理順
         """
         logger.debug("start")
-        # with ThreadPoolExecutor(thread_name_prefix="Rec Thread") as pool:
-        #     future = pool.submit(self.recognize_voice, audio, i)
-        #     logger.debug("submit end")
-        # withを使うとshutdownをwait=Trueで呼ぶので処理が終わらないと戻らない
-        pool = ThreadPoolExecutor(thread_name_prefix="Rec Thread")
-        future = pool.submit(self.recognize_voice, audio, i)
+        future = self.pool.submit(self.recognize_voice, audio, i)
         logger.debug("submit end")
-        pool.shutdown(False)
         self.futures.append(future)
         logger.debug("append end")
         logger.debug("end")
@@ -104,10 +100,8 @@ class VoiceRecognizer():
         音声を聞く(background) 動かし方がよくわからない
         """
         with self.mic as source:
-            # print("->")
             self.my_frame.insert_msg("->")
             ret = self.r.listen_in_background(source, self.recognize_voice)
-            # print(ret)
             self.my_frame.insert_msg(ret)
 
     def recognize_voice(self, audio, i) -> str:
@@ -120,13 +114,11 @@ class VoiceRecognizer():
             str:    認識した文字列
         """
         logger.debug("start")
-        # print(f"{i}-->", end=" ")
         self.my_frame.insert_msg(f"{i}⎘", end=" ")
         text = ""
         # recognize speech using Google Speech Recognition
         try:
             text = self.r.recognize_google(audio, language='ja-JP')
-            # print(f"\n{i}===>{text}")
             self.my_frame.insert_msg(f"\n{i}===>{text}")
         except sr.UnknownValueError:
             logger.warning("Google Speech Recognition could not understand audio")
@@ -179,6 +171,17 @@ class MyFrame(tk.Frame):
         self.txt.pack(fill=tk.BOTH, expand=True)
         # 音声認識クラスの作成  self.txtを使うので最後に作成する
         self.vr = VoiceRecognizer(self)
+
+        # ウィンドウの☓が押された時の処理を割り付ける
+        self.master.protocol("WM_DELETE_WINDOW", self.delete_window)
+
+    def delete_window(self):
+        """
+        ウィンドウの☓が押された時の処理
+        """
+        logger.info("pool shutdown")
+        self.vr.pool.shutdown()         # ThreadPoolExcutorの終了処理
+        self.master.destroy()           # 自分でウィンドウを削除する
 
     def entry_validate(self, modifyed_str:str) -> bool:
         """
@@ -270,7 +273,6 @@ class MyFrame(tk.Frame):
                 s = future.result()
                 logger.debug("get future result")
                 if not s:continue   # 空文字は認識できなかった時なので出力しない
-                # print(f"{s}")
                 self.insert_msg(f"{s}")
                 f.write(s + "\n")
         self.insert_msg("△", "\n\n")
