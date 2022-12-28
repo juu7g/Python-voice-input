@@ -282,7 +282,7 @@ class MyFrame(tk.Frame):
 class App(tk.Tk):
     def __init__(self, args:argparse.Namespace) -> None:
         super().__init__()
-        self.title("音声入力 1.0.1")      # タイトル
+        self.title("音声入力 1.0.2")      # タイトル
         self.geometry("800x600")    # サイズ
         my_frame = MyFrame(self, args)    # MyFrameクラスのインスタンス作成
 
