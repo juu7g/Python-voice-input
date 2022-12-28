@@ -232,8 +232,8 @@ class MyFrame(tk.Frame):
             str:    終端文字
         """
         msg1 = msg + end
-        self.txt.insert(tk.INSERT, msg1)
-        self.txt.see(tk.INSERT)
+        self.txt.insert(tk.END, msg1)
+        self.txt.see(tk.END)
         # self.txt.update_idletasks()   # see()メソッドを実行すると必要ない
 
     def voice_input_th(self, event=None):
@@ -282,7 +282,7 @@ class MyFrame(tk.Frame):
 class App(tk.Tk):
     def __init__(self, args:argparse.Namespace) -> None:
         super().__init__()
-        self.title("音声入力")      # タイトル
+        self.title("音声入力 1.0.1")      # タイトル
         self.geometry("800x600")    # サイズ
         my_frame = MyFrame(self, args)    # MyFrameクラスのインスタンス作成
 
