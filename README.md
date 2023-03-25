@@ -78,8 +78,8 @@
 
 ## プログラムの説明サイト Program description site
 
-[音声入力で文章作成するアプリの作り方【Python】】 - プログラムでおかえしできるかな](https://juu7g.hatenablog.com/entry/Python/speech-recognition/voice-input-GSR)  
-[CMU Sphinx音響モデルの適応【Python】](https://juu7g.hatenablog.com/entry/Python/speech-recognition/voice-input-sphinx)
+- [音声入力で文章作成するアプリの作り方【Python】 - プログラムでおかえしできるかな](https://juu7g.hatenablog.com/entry/Python/speech-recognition/voice-input-GSR)  
+- [CMU Sphinx音響モデルの適応【Python】 - プログラムでおかえしできるかな](https://juu7g.hatenablog.com/entry/Python/speech-recognition/voice-input-sphinx)
 
 ## 作者 Authors
 juu7g
