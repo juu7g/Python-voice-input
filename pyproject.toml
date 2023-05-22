@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "voice_input_juu7g"
+version = "1.0.0"
+authors = [	{ name="juu7g" },]
+description = "Voice recognition"
+license = {text = "MIT License"}
+requires-python = ">=3.8.5"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+	]
+dependencies = [
+	"PyAudio", "SpeechRecognition"
+	]
+
+[project.optional-dependencies]
+sphinx = ["pocketsphinx"]
