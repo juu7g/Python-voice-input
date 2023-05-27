@@ -12,11 +12,16 @@ from logging import getLogger, StreamHandler, Formatter
 import sys
 import argparse
 
+logger = getLogger(__name__)
+
 class VoiceRecognizer():
     """
     音声認識クラス
     """
-    def __init__(self, my_frame) -> None:
+    def __init__(self, my_frame=None) -> None:
+        """
+        Frameを使用してメッセージを出力する場合はFrameを指定する
+        """
         self.my_frame = my_frame
         # obtain audio from the microphone
         self.r = sr.Recognizer()
@@ -24,11 +29,15 @@ class VoiceRecognizer():
             self.mic = sr.Microphone()
         except Exception as e:
             print(f"マイクの状態を確認してください。参考({e})")
-            sys.exit()
+            raise   # 例外を伝える
+        
         self.do_break = False
         # ThreadPoolExecutor用準備
         self.futures = []
-        self.mic_init(my_frame.v_adjust.get(), my_frame.v_threshold.get())
+        if self.my_frame:
+            self.mic_init(my_frame.v_adjust.get(), my_frame.v_threshold.get())
+        else:
+            self.mic_init()
 
         # スレッドプールの作成
         self.pool = ThreadPoolExecutor(thread_name_prefix="Rec Thread")
@@ -43,7 +52,7 @@ class VoiceRecognizer():
         # マイクの初期設定
         self.r.energy_threshold = threshold
         logger.info(f"しきい値を設定しました：{self.r.energy_threshold:.2f}")
-        self.my_frame.insert_msg(f"しきい値を設定しました：{self.r.energy_threshold:.2f}")
+        self.out_msg(f"しきい値を設定しました：{self.r.energy_threshold:.2f}")
         # self.r.pause_threshold = 0.5
         self.r.dynamic_energy_threshold = is_dynamic     # しきい値調整する場合は動的変更しない
 
@@ -52,8 +61,7 @@ class VoiceRecognizer():
             with self.mic as source:
                 self.r.adjust_for_ambient_noise(source, 3.0) # 外部雑音に合わせてしきい値を調整
                 logger.info(f"外部雑音に合わせてしきい値を調整しました：{self.r.energy_threshold:.2f}")
-                self.my_frame.insert_msg(f"外部雑音に合わせてしきい値を調整しました：{self.r.energy_threshold:.2f}")
-        # listen用属性設定
+                self.out_msg(f"外部雑音に合わせてしきい値を調整しました：{self.r.energy_threshold:.2f}")
 
     def recognize_voice_thread_pool(self, audio, i, event=None):
         """
@@ -74,6 +82,7 @@ class VoiceRecognizer():
         """
         音声を聞いて音声データを作成
         聞き終わったら音声認識をスレッドで呼び出す
+        結果はself.futuresから取得
         Args:
             int:    処理順
         """
@@ -84,11 +93,11 @@ class VoiceRecognizer():
             # 静かな部屋だと思ったより低く出るみたいで使わない方がいいみたい
             # 扇風機が近くにあるとダメみたい。扇風機がないと有効にしても問題ない。
             if self.r.dynamic_energy_threshold:
-                self.my_frame.insert_msg(f"(しきい値：{self.r.energy_threshold:.2f})", end=" ")
+                self.out_msg(f"(しきい値：{self.r.energy_threshold:.2f})", end=" ")
                 if self.r.energy_threshold < 20:
                     self.r.energy_threshold = 20
-                    self.my_frame.insert_msg(f"(しきい値：{self.r.energy_threshold:.2f})", end=" ")
-            self.my_frame.insert_msg(f"{i}Ω", end=" ")
+                    self.out_msg(f"(しきい値：{self.r.energy_threshold:.2f})", end=" ")
+            self.out_msg(f"{i}Ω", end=" ")
             # マイク入力
             audio = self.r.listen(source)
         if not self.do_break:
@@ -100,9 +109,9 @@ class VoiceRecognizer():
         音声を聞く(background) 動かし方がよくわからない
         """
         with self.mic as source:
-            self.my_frame.insert_msg("->")
+            self.out_msg("->")
             ret = self.r.listen_in_background(source, self.recognize_voice)
-            self.my_frame.insert_msg(ret)
+            self.out_msg(ret)
 
     def recognize_voice(self, audio, i) -> str:
         """
@@ -114,23 +123,30 @@ class VoiceRecognizer():
             str:    認識した文字列
         """
         logger.debug("start")
-        self.my_frame.insert_msg(f"{i}⎘", end=" ")
+        self.out_msg(f"{i}⎘", end=" ")
         text = ""
         # recognize speech using Google Speech Recognition
         try:
             text = self.r.recognize_google(audio, language='ja-JP')
-            self.my_frame.insert_msg(f"\n{i}===>{text}")
+            self.out_msg(f"\n{i}===>{text}")
         except sr.UnknownValueError:
             logger.warning("Google Speech Recognition could not understand audio")
-            self.my_frame.insert_msg("❓")
+            self.out_msg("❓")
         except sr.RequestError as e:
             logger.warning("Could not request results from Google Speech Recognition service; {0}".format(e))
-            self.my_frame.insert_msg("❓")
+            self.out_msg("❓")
         else:
             if text == "ストップ":
                 self.do_break = True    # 終了フラグをオン
         logger.debug("end")
         return text
+
+    def out_msg(self, msg:str, end:str="\n"):
+        """
+        Frameが存在する時だけメッセージを出力する
+        """
+        if self.my_frame:
+            self.my_frame.insert_msg(msg, end)
 
 class MyFrame(tk.Frame):
     """
@@ -170,7 +186,10 @@ class MyFrame(tk.Frame):
         self.f_top.pack(fill=tk.X)
         self.txt.pack(fill=tk.BOTH, expand=True)
         # 音声認識クラスの作成  self.txtを使うので最後に作成する
-        self.vr = VoiceRecognizer(self)
+        try:
+            self.vr = VoiceRecognizer(self)
+        except Exception as e:
+            sys.exit()
 
         # ウィンドウの☓が押された時の処理を割り付ける
         self.master.protocol("WM_DELETE_WINDOW", self.delete_window)
@@ -289,11 +308,11 @@ class App(tk.Tk):
 if __name__ == '__main__':
     # logger setting
     LOGLEVEL = "INFO"   # ログレベル('CRITICAL','FATAL','ERROR','WARN','WARNING','INFO','DEBUG','NOTSET')
-    logger = getLogger(__name__)
+    # logger = getLogger(__name__)
     handler = StreamHandler()	# このハンドラーを使うとsys.stderrにログ出力
     handler.setLevel(LOGLEVEL)
     # ログ出形式を定義 時:分:秒.ミリ秒 L:行 M:メソッド名 T:スレッド名 コメント
-    handler.setFormatter(Formatter("{asctime}.{msecs:.0f} L:{lineno:0=3} M:{funcName} T:{threadName} : {message}", "%H:%M:%S", "{"))
+    handler.setFormatter(Formatter("{asctime}.{msecs:.0f} L:{lineno:0=3} T:{threadName} M:{funcName} : {message}", "%H:%M:%S", "{"))
     logger.setLevel(LOGLEVEL)
     logger.addHandler(handler)
     logger.propagate = False
