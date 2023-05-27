@@ -70,7 +70,7 @@
 - Sphinx版は音響モデルのフォルダと言語モデルと辞書のファイル名をソースで指定する必要があります
 
 
-## インストール方法 Installation
+## 依存関係パッケージのインストール方法 Installation
 
 - pip install pyaudio  
 - pip install SpeechRecognition
@@ -79,12 +79,13 @@
 ## プログラムの説明サイト Program description site
 
 - [音声入力で文章作成するアプリの作り方【Python】 - プログラムでおかえしできるかな](https://juu7g.hatenablog.com/entry/Python/speech-recognition/voice-input-GSR)  
-- [CMU Sphinx音響モデルの適応【Python】 - プログラムでおかえしできるかな](https://juu7g.hatenablog.com/entry/Python/speech-recognition/voice-input-sphinx)
+- [CMU Sphinx音響モデルの適応【Python】 - プログラムでおかえしできるかな](https://juu7g.hatenablog.com/entry/Python/speech-recognition/voice-input-sphinx)  
+- [◆voice_input_GSR モジュールについて](https://juu7g.hatenablog.com/entry/Python/rpa/pywinauto/voice-browser#voice_input_GSR-モジュールについて)
 
 ## 作者 Authors
 juu7g
 
 ## ライセンス License
-このソフトウェアは、MITライセンスのもとで公開されています。LICENSE.txtを確認してください。  
-This software is released under the MIT License, see LICENSE.txt.
+このソフトウェアは、MITライセンスのもとで公開されています。LICENSEファイルを確認してください。  
+This software is released under the MIT License, see LICENSE file.
 
